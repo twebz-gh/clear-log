@@ -22,14 +22,11 @@
 *.la
 *.lo
 
-# Shared objects (inc. Windows DLLs)
-*.dll
+# Shared objects
 *.so
 *.so.*
-*.dylib
 
 # Executables
-*.exe
 *.out
 *.app
 *.i*86
@@ -37,7 +34,6 @@
 *.hex
 
 # Debug files
-*.dSYM/
 *.su
 *.idb
 *.pdb
@@ -50,3 +46,5 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+src/log
