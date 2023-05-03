@@ -2,11 +2,11 @@
 
 set -e
 
-cgroup_line="$(cat /proc/1/cgroup | tail -n 1)"
-if [[ "$cgroup_line" == "/init.scope" ]]; then
-    echo "Run in a container that has the dependencies installed.  quitting."
-    exit 1
-fi
+#cgroup_line="$(cat /proc/1/cgroup | tail -n 1)"
+#if [[ "$cgroup_line" == "/init.scope" ]]; then
+#    echo "Run in a container that has the dependencies installed.  quitting."
+#    exit 1
+#fi
 
 print_help() {
     cat <<EOM
@@ -55,7 +55,7 @@ pushd $this_files_dir
             echo "export CC=/bin/clang"
             export CC=/bin/clang
         fi
-        cmake -DCMAKE_BUILD_TYPE=${build_type} -S .. -B .
+        cmake -DCMAKE_BUILD_TYPE=${build_type} -S ../src -B .
         #cmake -G "Ninja Multi-Config" ..
         #ninja -f build-Release.ninja
         if [[ -n $use_clang ]]; then

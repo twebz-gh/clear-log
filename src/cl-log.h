@@ -1,57 +1,65 @@
-typedef enum {
-    cl_none,
+#include <stdbool.h>
+
+enum cl_timestamp_format {
+    cl_ts_format_utc,      // 2023-04-22T19:46:12.9143Z·
+    cl_ts_format_iso8601,  // 2023-04-22T19:46:12.9143+03:00
+    cl_ts_format_locale,   // 2023-04-22 19:46:12.9143·
+    cl_ts_format_rfc1123,  // Sat, 22 Apr 2023 19:46:12.9143 GMT
+    cl_ts_format_clock,    // 19:47:22:9143
+    cl_ts_format_epoch,    // 1681998645.9143
+    cl_ts_format_decimal,  // 26.8956  (default)  Left pad with spaces to width 3.
+};
+
+# Default Configuration.
+bool cl_level_trace_enabled = true;
+bool cl_level_debug_enabled = true;
+bool cl_level_info_enabled  = true;
+bool cl_level_warn_enabled  = true;
+bool cl_level_error_enabled = true;
+
+bool cl_print_timestamp = true;
+enum cl_timestamp_format cl_timestamp_format = cl_ts_format_decimal;
+int  cl_timestamp_precision = 4;
+
+bool cl_print_file_and_line = true;
+bool cl_print_function = true;
+bool cl_print_thread_id = false;
+bool cl_print_color = false;
+
+char* cl_output_file = "stderr";
+
+/*
+typedef enum { cl_none,
     cl_error,
     cl_warn,
     cl_info,
     cl_debug,
     cl_trace,
     cl_tmp
-} cl_log_level;
+} cl_log_level; */
 
-typedef struct {
-    char*  name;
-    char*  fpath;
-    FILE*  fp;
-    bool   show_file;
-    bool   show_func;
-} cl_instance;
-
-typedef struct {
-    cl_log_level level;
-    char*        domain;  // Treat NULL as empty string.  Limit num chars?  Only output first n chars?
-    char*        thread_id;
-    char*        file;
-    int          line;
-    char*        func;
-    char*        msg;  // Treat NULL as empty string.
-    timespec     ts;
-    cl_instance  instance;  // The logger instance.
-} cl_msg;
+typedef struct cl_msg cl_msg;
+void cl_logger_init(void);
+void cl_tmp_trace(void) { printf("--> trace\n"); }
+void cl_enqueue(cl_msg* msg);
 
 // Fill the timestamp as early as possible.
-// todo How to get CL_DOMAIN?  How to make sure the user sets it correctly.
-// todo How to get a useful, human readable thread id?
-#define cl_trace(instance, ...) \
+// todo add:  msg->thread_id = get_thread_id() \
+#define cl_trace(...) \
 do { \
-    if (!CL_LEVEL_TRACE_ENABLED) { \
+    if (!cl_level_trace_enabled) { \
         return; \
     } \
-    timespec* ts_tmp; \
-    clock_gettime(CLOCK_REALTIME, ts_tmp); \
-    cl_msg* msg = cl_create_msg(); \
-    msg->instance = cl_get_instance(); \
-    msg->instance->show_file ? msg->file = __FILE__, msg->line = __line__ : msg->file = NULL, msg->line = 0; \
-    msg->instance->show_func ? msg->func = __func__ : msg->func = NULL; \
-    msg->ts = ts_tmp; \
+    timespec* ts; \
+    clock_gettime(CLOCK_REALTIME, ts); \
+    cl_msg* msg = malloc(sizeof(cl_msg)); \
+    if (msg == NULL) { break; } \
+    cl_print_file_and_line ? msg->file = __FILE__, msg->line = __line__ \
+                           : msg->file = NULL,     msg->line = 0; \
+    cl_print_function ? msg->func = __func__ : msg->func = NULL; \
+    msg->ts = ts; \
     msg->level = cl_trace; \
-    msg->domain = CL_DOMAIN; \
-    msg->thread_id = get_thread_id() \
     cl_enqueue(msg); \
 } while (0);
 
-/*
-You can't use #ifdef inside #define.
-Figure out diff way to put CL_DOMAIN into the msg struct.
 
-Similarly, would you put `#define CL_DOMAIN <name>` into every .c file?
-*/
